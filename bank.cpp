@@ -6,6 +6,7 @@ using namespace std;
 
 map<string, tuple<string, int>> users; // user: (password, amount)
 int author = 0; // 0-not logined, 1-user, 2-admin
+string currUser;
 vector<string> split(string str, char del){
     // declaring temp string to store the curr "word" upto del
     vector<string> ans;
@@ -125,12 +126,17 @@ void login(){
         cout << '\n';
         if (password == get<0>(users[username])){
             cout << "Logged in" << '\n';
+            currUser = username;
             break;
         }
     }while (1);
     tcsetattr(STDIN_FILENO, TCSANOW, &oldt);
 }
+int checkamount(){
+    return get<1>(users[currUser]);
+}
 int main(){
     initiate();
     login();
+    cout << checkamount() << '\n';
 }
