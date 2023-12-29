@@ -7,8 +7,41 @@ using namespace std;
 
 unordered_map<string, tuple<string, int, string>> users; // user: (password, amount, name)
 unordered_map<string, string> admins; // admin: password
+unordered_map<string, vector<vector<string>>> transmissionRecords;
+unordered_map<string, vector<vector<string>>> withdrawnRecords;
+unordered_map<string, vector<vector<string>>> depositRecords;
 int author = 0; // 0-not logined, 1-user, 2-admin
 string currUser;
+bool isValidDate(string dateStr) {
+    // Define a regular expression pattern for the YYYY-MM-DD format
+    std::regex datePattern("^\\d{4}-\\d{2}-\\d{2}$");
+
+    // Check if the input string matches the pattern
+    if (!std::regex_match(dateStr, datePattern)) {
+        return false;
+    }
+
+    // Parse the date string to check if it's a valid date
+    std::istringstream dateStream(dateStr);
+    int year, month, day;
+    char dash1, dash2;
+
+    dateStream >> year >> dash1 >> month >> dash2 >> day;
+    if (dateStream.fail() || dash1 != '-' || dash2 != '-') {
+        // Parsing failed
+        return false;
+    }
+
+    // Check if the parsed values represent a valid date
+    if (year < 0 || month < 1 || month > 12 || day < 1 || day > 31) {
+        return false;
+    }
+
+    // Additional date validation logic can be added here if needed
+
+    return true;
+}
+
 string getDate(){
      // Get the current time point
     auto now = std::chrono::system_clock::now();
@@ -47,7 +80,52 @@ vector<string> split(string str, char del){
     ans.push_back(temp);
     return ans;
 }
+string getInputDate(){
+    string ans;
+    do{
+        cout << "Enter a date in format YYYY-MM-DD ";
+        cin >> ws;
+        getline(cin, ans); 
+    }while(!isValidDate(ans));
+    return ans;
+}
+void updateTransmission(unordered_map<string, vector<vector<string>>>& transmissionRecords, string originInfo){
+    vector<string> info = split(originInfo, ' ');
+    // send history
+    if (transmissionRecords.find(info[0]) == transmissionRecords.end()){
+        transmissionRecords[info[0]] = {info};
+    }
+    else {
+        transmissionRecords[info[0]].push_back(info);
+    }
+    // receive history
+    if (transmissionRecords.find(info[1]) == transmissionRecords.end()){
+        transmissionRecords[info[1]] = {info};
+    }
+    else {
+        transmissionRecords[info[1]].push_back(info);
+    }
+}
+void updateWithdrawn(unordered_map<string, vector<vector<string>>>& withdrawnRecords, string originInfo){
+    vector<string> info = split(originInfo, ' ');
+    if (withdrawnRecords.find(info[0]) == withdrawnRecords.end()){
+        withdrawnRecords[info[0]] = {info};
+    }
+    else {
+        withdrawnRecords[info[0]].push_back(info);
+    }
+}
+void updateDeposit(unordered_map<string, vector<vector<string>>>& depositRecords, string originInfo){
+    vector<string> info = split(originInfo, ' ');
+    if (depositRecords.find(info[0]) == depositRecords.end()){
+        depositRecords[info[0]] = {info};
+    }
+    else {
+        depositRecords[info[0]].push_back(info);
+    }
+}
 void initiate(){
+    // get users
     ifstream accountFile("./user/account.txt");
     string userInfo;
     while (getline(accountFile, userInfo)){
@@ -56,6 +134,7 @@ void initiate(){
     }
     accountFile.close();
 
+    // get admins
     ifstream adminFile("./user/admin.txt");
     string adminInfo;
     while (getline(adminFile, adminInfo)){
@@ -63,6 +142,47 @@ void initiate(){
         admins[info[0]] = info[1];
     }
     adminFile.close();
+
+    // get transmission
+    ifstream transmissionFile("./user/transmission.txt");
+    string transmissionInfo;
+    while (getline(transmissionFile, transmissionInfo)){
+        // <from> <to> <amount> <date/time>
+        vector<string> info = split(transmissionInfo, ' ');
+        // send history
+        if (transmissionRecords.find(info[0]) == transmissionRecords.end()){
+            transmissionRecords[info[0]] = {info};
+        }
+        else {
+            transmissionRecords[info[0]].push_back(info);
+        }
+        // receive history
+        if (transmissionRecords.find(info[1]) == transmissionRecords.end()){
+            transmissionRecords[info[1]] = {info};
+        }
+        else {
+            transmissionRecords[info[1]].push_back(info);
+        }
+    }
+    transmissionFile.close();
+
+    // get withdrawn
+    ifstream withdrawnFile("./user/withdrawn.txt");
+    string withdrawnInfo;
+    while (getline(withdrawnFile, withdrawnInfo)){
+        // <from> <to> <amount> <date/time>
+        updateWithdrawn(withdrawnRecords, withdrawnInfo);
+    }
+    withdrawnFile.close();
+
+    // get deposit
+    ifstream depositFile("./user/deposit.txt");
+    string depositInfo;
+    while (getline(depositFile, depositInfo)){
+        // <from> <to> <amount> <date/time>
+        updateDeposit(depositRecords, depositInfo);
+    }
+    withdrawnFile.close();
 }
 void save(){
     ofstream userFile("./user/account.txt");
@@ -279,64 +399,111 @@ void createAdminAccount(){
 
     admins[username] = password;
 }
-void viewTranmissionHistory(){
-    ifstream tranmissionFile("./user/transmission.txt");
-    string line;
-    while (getline(tranmissionFile, line)){
-        vector<string> arr = split(line, ' ');
-        string fromUser = arr[0];
-        string toUser = arr[1];
-        if (currUser == fromUser){
-            cout << "You transfered " + arr[2] + " to " + get<2>(users[arr[1]]) + " on " + split(arr[3], '/')[0] + " at " + split(arr[3], '/')[1] << '\n'; 
-        }
-        else if (currUser == toUser){
-            cout << get<2>(users[fromUser]) + " transfered " + arr[2] + " to you " + " on " + split(arr[3], '/')[0] + " at " + split(arr[3], '/')[1] << '\n'; 
+void viewTransmissionHistory(string currUser, string fromDate, string toDate, unordered_map<string, vector<vector<string>>>transmissionRecords, unordered_map<string, tuple<string, int, string>> users) {
+    vector<vector<string>> transmissionHistoryOfUser = transmissionRecords[currUser];
+    int exist = 0;
+    for (auto record : transmissionHistoryOfUser){
+        string fromAccount = record[0];
+        string toAccount = record[1];
+        string amount = record[2];
+        string date = split(record[3], '/')[0];
+        string time = split(record[3], '/')[1];
+        if (date >= fromDate and date <= toDate){
+            if (!exist){
+                exist = 1;
+            }
+            if (currUser == fromAccount){
+                cout << "You transfered " + amount + " to " + get<2>(users[toAccount]) + " on " + date + " at " + time << '\n';
+            }
+            else{
+                cout << get<2>(users[fromAccount]) + " transfered " + amount + " to you " + " on " + date + " at " + time << '\n'; 
+            }
         }
     }
-}
-void viewWithdrawalHistory(){
-    ifstream withdrawnFile("./user/withdrawn.txt");
-    string line;
-    while (getline(withdrawnFile, line)){
-        vector<string> arr = split(line, ' ');
-        if (arr[0] != currUser){
-            continue;
-        }
-        cout << "You withdrawned " + arr[1] + " on " + split(arr[2], '/')[0] + " at " + split(arr[2], '/')[1] << '\n';
+    if (!exist){
+            cout << "No records" << endl;
     }
 }
-void viewDepositHistory(){
-    ifstream depositFile("./user/deposit.txt");
-    string line;
-    while (getline(depositFile, line)){
-        vector<string> arr = split(line, ' ');
-        if (arr[0] != currUser){
-            continue;
+void viewWithdrawalHistory(string currUser, string fromDate, string toDate, unordered_map<string, vector<vector<string>>>withdrawnRecords) {
+    vector<vector<string>> withdrawnHistoryOfUser = withdrawnRecords[currUser];
+    cout << currUser << endl;
+    cout << withdrawnRecords[currUser].size() << endl;
+    int exist = 0;
+    for (auto record : withdrawnHistoryOfUser){
+        string amount = record[1];
+        string date = split(record[2], '/')[0];
+        string time = split(record[2], '/')[1];
+        if (date >= fromDate and date <= toDate){
+            if (!exist){
+                exist = 1;
+            }
+            cout << "You withdrawed " + amount + " to" + " on " + date + " at " + time << '\n';
+            
         }
-        cout << "You deposited " + arr[2] + " on " + split(arr[3], '/')[0] + " at " + split(arr[3], '/')[1] << '\n';
+    }
+    if (!exist){
+            cout << "No records" << endl;
     }
 }
-void transferMoney(string username, int amount){
+void viewDepositHistory(string currUser, string fromDate, string toDate, unordered_map<string, vector<vector<string>>>depositRecords) {
+    vector<vector<string>> depositHistoryOfUser = depositRecords[currUser];
+    int exist = 0;
+    for (auto record : depositHistoryOfUser){
+        string amount = record[2];
+        string date = split(record[3], '/')[0];
+        string time = split(record[3], '/')[1];
+        if (date >= fromDate and date <= toDate){
+            if (!exist){
+                exist = 1;
+            }
+            
+            cout << "You withdrawed " + amount + " to" + " on " + date + " at " + time << '\n';
+            
+        }
+    }
+    if (!exist){
+            cout << "No records" << endl;
+    }
+}
+void transferMoney(string currUser,string username, int amount, unordered_map<string, vector<vector<string>>>& transmissionRecords){
     get<1>(users[currUser]) -= amount;
     get<1>(users[username]) += amount;
+    // save transmission
     string date = getDate();
+    string originInfo = currUser + " " + username + " " + to_string(amount) + " " + date;
     ofstream transmissionFile;
     transmissionFile.open("./user/transmission.txt", ios::app);
     transmissionFile << currUser + " " + username + " " + to_string(amount) + " " + date + '\n';
     transmissionFile.close();
+
+    // update
+    updateTransmission(transmissionRecords, originInfo);
     return;
 }
-void withdrawnMoney(int amount){
+void withdrawnMoney(int amount, string currUser, unordered_map<string, tuple<string, int, string>>& users, unordered_map<string, vector<vector<string>>>& withdrawnRecords){
     get<1>(users[currUser]) -= amount;
     string date = getDate();
-    ofstream transmissionFile;
-    transmissionFile.open("./user/withdrawn.txt", ios::app);
-    transmissionFile << currUser + " " + to_string(amount) + " " + date + '\n';
-    transmissionFile.close();
+    ofstream withdrawnFile;
+    string info = currUser + " " + to_string(amount) + " " + date;
+    withdrawnFile.open("./user/withdrawn.txt", ios::app);
+    withdrawnFile << currUser + " " + to_string(amount) + " " + date + '\n';
+    withdrawnFile.close();
+    updateWithdrawn(withdrawnRecords, info);
     return;
 }
-void checkamount(string user){
-    cout << "Your balance is: " << get<1>(users[user]);
+void depositMoney(string userAccount, string currUser, string amount,  unordered_map<string, tuple<string, int, string>>& users, unordered_map<string, vector<vector<string>>>& depositRecords){
+    get<1>(users[userAccount]) += stoi(amount);
+    ofstream depositFile;
+    string date = getDate();
+    string info = userAccount + " " + currUser + " " + amount + ' ' + date;
+    depositFile.open("./user/deposit.txt", ios::app);
+    depositFile << userAccount + " " + currUser + " " + amount + ' ' + date + '\n';
+    depositFile.close();
+    updateDeposit(depositRecords, info);
+}
+
+void checkBalance(string userAccount, unordered_map<string, tuple<string, int, string>> users){
+    cout << get<2>(users[userAccount]) << "'s balance is: " << get<1>(users[userAccount]);
 }
 
 void displayUserMenu(){
@@ -376,7 +543,7 @@ void displayUserMenu(){
                 system("clear");
                 cout << "--------------------" << '\n';
                 cout << "RESULT" << '\n';
-                checkamount(currUser);
+                checkBalance(currUser, users);
                 cout << '\n' << "Enter 0 To Return" << '\n';
                 string in;
                 cin >> in;
@@ -442,7 +609,7 @@ void displayUserMenu(){
                         }while (1);
                         tcsetattr(STDIN_FILENO, TCSANOW, &oldt);
                         // transfer money
-                        transferMoney(userAccount, stoi(amount));
+                        transferMoney(currUser, userAccount, stoi(amount), transmissionRecords);
                         cout << "SUCCESSFULLY TRANSFER MONEY" << '\n';
                         cout << "Enter 0 To Return" << '\n';
                         string in;
@@ -498,7 +665,7 @@ void displayUserMenu(){
                         }while (1);
                         tcsetattr(STDIN_FILENO, TCSANOW, &oldt);
                         // transfer money
-                        withdrawnMoney(stoi(amount));
+                        withdrawnMoney(stoi(amount), currUser, users, withdrawnRecords);
                         cout << "SUCCESSFULLY WITHDRAWN MONEY" << '\n';
                         cout << "Enter 0 To Return" << '\n';
                         string in;
@@ -509,9 +676,18 @@ void displayUserMenu(){
                 break;
             }
             case 4: {
+                // system("clear");
+                // cout << "TRANSMISSION HISTORY" << '\n';
+                // log
+                system("clear");
+                cout << "ENTER THE START DATE" << '\n';
+                string fromDate = getInputDate();
+                // log
+                cout << "ENTER THE END DATE" << '\n';
+                string toDate = getInputDate();
                 system("clear");
                 cout << "TRANSMISSION HISTORY" << '\n';
-                viewTranmissionHistory();
+                viewTransmissionHistory(currUser, fromDate, toDate, transmissionRecords, users);
                 cout << '\n' << "Enter 0 To Return" << '\n';
                 string in;
                 cin >> in;
@@ -519,8 +695,14 @@ void displayUserMenu(){
             }
             case 5:{
                 system("clear");
+                cout << "ENTER THE START DATE" << '\n';
+                string fromDate = getInputDate();
+                // log
+                cout << "ENTER THE END DATE" << '\n';
+                string toDate = getInputDate();
+                system("clear");
                 cout << "WITHDRAWAL HISTORY" << '\n';
-                viewWithdrawalHistory();
+                viewWithdrawalHistory(currUser, fromDate, toDate, withdrawnRecords);
                 cout << '\n' << "Enter 0 To Return" << '\n';
                 string in;
                 cin >> in;
@@ -528,8 +710,15 @@ void displayUserMenu(){
             }
             case 6:{
                 system("clear");
+                cout << "ENTER THE START DATE" << '\n';
+                string fromDate = getInputDate();
+                // log
+                cout << "ENTER THE END DATE" << '\n';
+                string toDate = getInputDate();
+                system("clear");
+                cout << "WITHDRAWAL HISTORY" << '\n';
                 cout << "DEPOSIT HISTORY" << '\n';
-                viewDepositHistory();
+                viewDepositHistory(currUser, fromDate, toDate, depositRecords);
                 cout << '\n' << "Enter 0 To Return" << '\n';
                 string in;
                 cin >> in;
@@ -628,11 +817,8 @@ void displayAdminMenu(){
                             }
                         }while (1);
                         tcsetattr(STDIN_FILENO, TCSANOW, &oldt);
-                        // transfer money
-                        get<1>(users[userAccount]) += stoi(amount);
-                        ofstream depositFile;
-                        depositFile.open("./user/deposit.txt", ios::app);
-                        depositFile << userAccount + " " + currUser + " " + amount + ' ' + getDate() + '\n';
+                        // deposit money
+                        depositMoney(userAccount, currUser, amount, users, depositRecords);
                         cout << "SUCCESSFULLY DEPOSIT MONEY" << '\n';
                         cout << "Enter 0 To Return" << '\n';
                         string in;
@@ -652,7 +838,7 @@ void displayAdminMenu(){
                     cin >> userAccount;
                     cout << '\n';
                     if (users.find(userAccount) != users.end()){
-                        cout << userAccount << "'s balance: " << get<1>(users[userAccount]) << '\n';
+                        checkBalance(userAccount, users);
                         break;
                     }
                     else {
@@ -769,4 +955,5 @@ int main(){
     system("clear");
     initiate();
     displayMenu();
+    // viewTransmissionHistory("longvu1", "2023-12-22", "2023-12-24", transmissionRecords, users);
 }
