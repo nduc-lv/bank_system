@@ -33,10 +33,10 @@ def random_date():
 existedAccount = {}
 # initializing size of string
 N = 7
- 
+times = 10000
 # generate account
-f = open("./data/account.txt", "a")
-for i in range(10000):
+f = open("./data/user.txt", "a")
+for i in range(times):
     while 1:
         account = ''.join(random.choices(string.ascii_letters, k=N))
         if (account not in existedAccount):
@@ -55,13 +55,12 @@ h = open("./data/withdrawn.txt", 'a')
 s = []
 r = []
 k = []
-for i in range(10000):
-    while 1:
-        fromAccount = random.choice(list(existedAccount.keys()))
-        toAccount = random.choice(list(existedAccount.keys()))
-        if (fromAccount != toAccount):
-            date = random_date_time()
-            break
+for i in range(times * 10):
+    data = list(existedAccount.keys())
+    fromAccount = random.choice(data)
+    data.remove(fromAccount)
+    toAccount = random.choice(data)
+    date = random_date_time()
     amount = "1"
     s.append((date, ' '.join([fromAccount, "longvu", amount, date]) + '\n'))
     r.append((date, ' '.join([fromAccount,amount, date]) + '\n'))
@@ -81,7 +80,7 @@ g.close()
 h.close()
 # generate view[Anything] input
 f = open("./input/view.txt", 'a')
-for i in range(10000):
+for i in range(times * 10):
     fromAccount = random.choice(list(existedAccount.keys()))
     while (1):
         startDate = random_date()
@@ -93,7 +92,7 @@ f.close()
 
 # generate transferMoney input
 f = open("./input/transferMoney.txt", 'a')
-for i in range(10000):
+for i in range(times * 10):
     while 1:
         fromAccount = random.choice(list(existedAccount.keys()))
         toAccount = random.choice(list(existedAccount.keys()))
@@ -106,7 +105,7 @@ f.close()
 
 # generate withdrawnMoney input
 f = open("./input/withdrawMoney.txt", 'a')
-for i in range(10000):
+for i in range(times * 10):
     amount = "1"
     account = random.choice(list(existedAccount.keys()))
     f.write(' '.join([amount, account]) + '\n')
@@ -114,7 +113,7 @@ f.close()
 
 # generate depositMoney input
 f = open("./input/depositMoney.txt", 'a')
-for i in range(10000):
+for i in range(times * 10):
     amount = "1"
     account = random.choice(list(existedAccount.keys()))
     f.write(' '.join([account, "longvu", amount]) + '\n')
@@ -122,7 +121,7 @@ f.close()
 
 # generate checkBalance input
 f = open("./input/checkBalance.txt", 'a')
-for i in range(10000):
+for i in range(times * 10):
     amount = "1"
     account = random.choice(list(existedAccount.keys()))
     f.write(account + '\n')

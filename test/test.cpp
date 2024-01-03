@@ -11,7 +11,7 @@ unordered_map<string, vector<vector<string>>> withdrawnRecords;
 unordered_map<string, vector<vector<string>>> depositRecords;
 void initiate(){
     // get users
-    ifstream accountFile("./data/account.txt");
+    ifstream accountFile("./data/user.txt");
     string userInfo;
     while (getline(accountFile, userInfo)){
         vector<string> info = split(userInfo, '+');
@@ -70,7 +70,7 @@ void initiate(){
     withdrawnFile.close();
 }
 void save(){
-    ofstream userFile("./data/account.txt");
+    ofstream userFile("./data/user.txt");
     for (auto i : users){
         string account = i.first;
         string password = get<0>(i.second);
@@ -86,4 +86,190 @@ void save(){
         string password = i.second;
         adminFile << adminName + " " + password + '\n';
     }
+}
+void testViewTransmissionHistory(){
+    ifstream viewFile("./input/view.txt");
+    string inputInfo;
+    std::ofstream outputFile("./output/viewTransmission.txt");
+
+    // Check if the file is opened successfully
+    if (!outputFile.is_open()) {
+        std::cerr << "Error opening the file!" << std::endl;
+        return;
+    }
+
+    // Redirect std::cout to the file
+    std::streambuf *coutBuffer = std::cout.rdbuf();
+    std::cout.rdbuf(outputFile.rdbuf());
+    auto startTime = std::chrono::high_resolution_clock::now();
+    while (getline(viewFile, inputInfo)){
+        vector<string> info = split(inputInfo, ' ');
+        string account = info[0];
+        string startDate = info[1];
+        string endDate = info[2];
+        cout << account << "'s Transmission history" << '\n';
+        viewTransmissionHistory(account, startDate, endDate, transmissionRecords, users); 
+        cout << "#######################" << '\n';
+    }
+    auto endTime = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime);
+    std::cout.rdbuf(coutBuffer);
+    outputFile.close();
+    viewFile.close();
+    std::cout << "Time taken to run viewTransmissionHistory 100,000 times: " << duration.count() << " milliseconds" << std::endl;
+}
+void testViewWithdrawalHistory(){
+    ifstream viewFile("./input/view.txt");
+    string inputInfo;
+    std::ofstream outputFile("./output/viewWithdraw.txt");
+
+    // Check if the file is opened successfully
+    if (!outputFile.is_open()) {
+        std::cerr << "Error opening the file!" << std::endl;
+        return;
+    }
+
+    // Redirect std::cout to the file
+    std::streambuf *coutBuffer = std::cout.rdbuf();
+    std::cout.rdbuf(outputFile.rdbuf());
+    auto startTime = std::chrono::high_resolution_clock::now();
+    while (getline(viewFile, inputInfo)){
+        vector<string> info = split(inputInfo, ' ');
+        string account = info[0];
+        string startDate = info[1];
+        string endDate = info[2];
+        cout << account << "'s Withdrawal history" << '\n';
+        viewWithdrawalHistory(account, startDate, endDate, withdrawnRecords); 
+        cout << "#######################" << '\n';
+    }
+    auto endTime = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime);
+    std::cout.rdbuf(coutBuffer);
+    outputFile.close();
+    viewFile.close();
+    std::cout << "Time taken to run viewWithdrawalHistory 100,000 times: " << duration.count() << " milliseconds" << std::endl;
+}
+void testViewDepositHistory(){
+    ifstream viewFile("./input/view.txt");
+    string inputInfo;
+    std::ofstream outputFile("./output/viewDeposit.txt");
+
+    // Check if the file is opened successfully
+    if (!outputFile.is_open()) {
+        std::cerr << "Error opening the file!" << std::endl;
+        return;
+    }
+
+    // Redirect std::cout to the file
+    std::streambuf *coutBuffer = std::cout.rdbuf();
+    std::cout.rdbuf(outputFile.rdbuf());
+    auto startTime = std::chrono::high_resolution_clock::now();
+    while (getline(viewFile, inputInfo)){
+        vector<string> info = split(inputInfo, ' ');
+        string account = info[0];
+        string startDate = info[1];
+        string endDate = info[2];
+        cout << account << "'s Deposit history" << '\n';
+        viewDepositHistory(account, startDate, endDate, depositRecords);
+        cout << "#######################" << '\n';
+    }
+    auto endTime = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime);
+    std::cout.rdbuf(coutBuffer);
+    outputFile.close();
+    viewFile.close();
+    std::cout << "Time taken to run viewDepositHistory 100,000 times: " << duration.count() << " milliseconds" << std::endl;
+}
+void testTransferMoney(){
+    ifstream inputFile("./input/transferMoney.txt");
+    string inputInfo;
+    auto startTime = std::chrono::high_resolution_clock::now();
+    while (getline(inputFile, inputInfo)){
+        vector<string> info = split(inputInfo, ' ');
+        string fromAccount = info[0];
+        string toAccount = info[1];
+        string amount = info[2];
+        transferMoney(fromAccount, toAccount, stoi(amount), users, transmissionRecords);
+    }
+    auto endTime = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime);
+    inputFile.close();
+    std::cout << "Time taken to run transferMoney 100,000 times: " << duration.count() << " milliseconds" << std::endl;
+}
+void testWithdrawMoney(){
+    ifstream inputFile("./input/withdrawMoney.txt");
+    string inputInfo;
+    auto startTime = std::chrono::high_resolution_clock::now();
+    while (getline(inputFile, inputInfo)){
+        vector<string> info = split(inputInfo, ' ');
+        string amount = info[0];
+        string account = info[1];
+        withdrawnMoney(stoi(amount), account, users, withdrawnRecords);
+    }
+    auto endTime = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime);
+    inputFile.close();
+    std::cout << "Time taken to run withdrawMoney 100,000 times: " << duration.count() << " milliseconds" << std::endl;
+}
+void testDepositMoney(){
+    ifstream inputFile("./input/depositMoney.txt");
+    string inputInfo;
+    auto startTime = std::chrono::high_resolution_clock::now();
+    while (getline(inputFile, inputInfo)){
+        vector<string> info = split(inputInfo, ' ');
+        string account = info[0];
+        string admin = info[1];
+        string amount = info[2];
+        depositMoney(account, admin, amount, users, depositRecords);
+    }
+    auto endTime = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime);
+    inputFile.close();
+    std::cout << "Time taken to run depositMoney 100,000 times: " << duration.count() << " milliseconds" << std::endl;
+}
+void testCheckBalance(){
+    ifstream viewFile("./input/checkBalance.txt");
+    string inputInfo;
+     std::ofstream outputFile("./output/checkBalance.txt");
+
+     // Check if the file is opened successfully
+     if (!outputFile.is_open()) {
+         std::cerr << "Error opening the file!" << std::endl;
+         return;
+     }
+
+     // Redirect std::cout to the file
+     std::streambuf *coutBuffer = std::cout.rdbuf();
+     std::cout.rdbuf(outputFile.rdbuf());
+    auto startTime = std::chrono::high_resolution_clock::now();
+    while (getline(viewFile, inputInfo)){
+        // cout << inputInfo << "'s balance" << '\n';
+        checkBalance(inputInfo, users);
+        // cout << "#######################" << '\n';
+    }
+    auto endTime = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::seconds>(endTime - startTime);
+    // std::cout.rdbuf(coutBuffer);
+    // outputFile.close();
+    viewFile.close();
+    std::cout << "Time taken to run checkBalance 100,000 times: " << duration.count() << " seconds" << std::endl;
+}
+int main(){
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+    initiate();
+    // test View Transmission
+    testViewTransmissionHistory();
+    // test View WithDrawn
+    testViewWithdrawalHistory();
+    // test View Deposit
+    testViewDepositHistory();
+    // test Transfer
+    testTransferMoney();
+    // test Deposit
+    testDepositMoney();
+    // test Withdraw
+    testWithdrawMoney();
+    // test CheckBalance
+    testCheckBalance();
 }

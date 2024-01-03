@@ -117,7 +117,7 @@ void updateDeposit(unordered_map<string, vector<vector<string>>>& depositRecords
         depositRecords[info[0]].push_back(info);
     }
 }
-void viewTransmissionHistory(string currUser, string fromDate, string toDate, unordered_map<string, vector<vector<string>>>transmissionRecords, unordered_map<string, tuple<string, int, string>> users) {
+void viewTransmissionHistory(string currUser, string fromDate, string toDate, unordered_map<string, vector<vector<string>>>&  transmissionRecords, unordered_map<string, tuple<string, int, string>>&  users) {
     vector<vector<string>> transmissionHistoryOfUser = transmissionRecords[currUser];
     int exist = 0;
     for (auto record : transmissionHistoryOfUser){
@@ -127,22 +127,24 @@ void viewTransmissionHistory(string currUser, string fromDate, string toDate, un
         string date = split(record[3], '/')[0];
         string time = split(record[3], '/')[1];
         if (date >= fromDate and date <= toDate){
+            if (date < fromDate){
+                continue;
+            }
+            if (date > toDate){
+                break;
+            }
+        
             if (!exist){
                 exist = 1;
             }
-            if (currUser == fromAccount){
-                cout << "You transfered " + amount + " to " + get<2>(users[toAccount]) + " on " + date + " at " + time << '\n';
-            }
-            else{
-                cout << get<2>(users[fromAccount]) + " transfered " + amount + " to you " + " on " + date + " at " + time << '\n'; 
-            }
+            cout << get<2>(users[fromAccount]) + " transfered " + amount + " to you " + " on " + date + " at " + time << '\n'; 
         }
     }
     if (!exist){
             cout << "No records" << endl;
     }
 }
-void viewWithdrawalHistory(string currUser, string fromDate, string toDate, unordered_map<string, vector<vector<string>>>withdrawnRecords) {
+void viewWithdrawalHistory(string currUser, string fromDate, string toDate, unordered_map<string, vector<vector<string>>>&  withdrawnRecords) {
     vector<vector<string>> withdrawnHistoryOfUser = withdrawnRecords[currUser];
     cout << currUser << endl;
     cout << withdrawnRecords[currUser].size() << endl;
@@ -151,33 +153,44 @@ void viewWithdrawalHistory(string currUser, string fromDate, string toDate, unor
         string amount = record[1];
         string date = split(record[2], '/')[0];
         string time = split(record[2], '/')[1];
-        if (date >= fromDate and date <= toDate){
-            if (!exist){
-                exist = 1;
-            }
-            cout << "You withdrawed " + amount + " to" + " on " + date + " at " + time << '\n';
-            
+        
+        if (date < fromDate){
+            continue;
         }
+        if (date > toDate){
+            break;
+        }
+        
+        if (!exist){
+            exist = 1;
+        }
+        cout << "You withdrawed " + amount + " to" + " on " + date + " at " + time << '\n';
     }
     if (!exist){
             cout << "No records" << endl;
     }
 }
-void viewDepositHistory(string currUser, string fromDate, string toDate, unordered_map<string, vector<vector<string>>>depositRecords) {
+void viewDepositHistory(string currUser, string fromDate, string toDate, unordered_map<string, vector<vector<string>>>&  depositRecords) {
     vector<vector<string>> depositHistoryOfUser = depositRecords[currUser];
     int exist = 0;
     for (auto record : depositHistoryOfUser){
         string amount = record[2];
         string date = split(record[3], '/')[0];
         string time = split(record[3], '/')[1];
-        if (date >= fromDate and date <= toDate){
-            if (!exist){
-                exist = 1;
-            }
-            
-            cout << "You withdrawed " + amount + " to" + " on " + date + " at " + time << '\n';
-            
+        if (date < fromDate){
+            continue;
         }
+        if (date > toDate){
+            break;
+        }
+        
+        if (!exist){
+            exist = 1;
+        }
+            
+        cout << "You deposited " + amount + " to" + " on " + date + " at " + time << '\n';
+            
+        
     }
     if (!exist){
             cout << "No records" << endl;
@@ -221,5 +234,6 @@ void depositMoney(string userAccount, string currUser, string amount,  unordered
 }
 
 void checkBalance(string userAccount, unordered_map<string, tuple<string, int, string>> users){
-    cout << get<2>(users[userAccount]) << "'s balance is: " << get<1>(users[userAccount]);
+    tuple<string, int, string> userInfo = users[userAccount];
+    cout << get<2>(userInfo) << "'s balance is: " << get<1>(userInfo) << '\n';
 }

@@ -4,6 +4,7 @@
         "fstream": "cpp",
         "ostream": "cpp",
         "iosfwd": "cpp",
-        "tuple": "cpp"
+        "tuple": "cpp",
+        "chrono": "cpp"
     }
 }
