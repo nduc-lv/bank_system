@@ -137,16 +137,23 @@ void createUserAccount(){
         password = "";
         cout << "Enter your password (password must not have '+' characters): ";
         cin >> ws;
+        int valid = 1;
         while (1){
             char c = cin.get();
             if (c == '+'){
-                cout << "\n" << "Password contains '+' character, please enter a new password '\n'";
-                cout << "Enter your password (password must not have '+' characters): ";
-                password = "";
-                continue;
+                valid = 0;
             }
             if (c == '\n'){
-                break;
+                if (valid){
+                    break;
+                }
+                else{
+                    password = "";
+                    cout << "\n" << "Password contains '+' character, please enter a new password \n";
+                    cout << "Enter your password (password must not have '+' characters): ";
+                    valid = 1;
+                    continue;
+                }
             }
             password += c;
         }
@@ -294,16 +301,22 @@ void createAdminAccount(){
         password = "";
         cout << "Enter your password (password must not have whitespace character): ";
         cin >> ws;
+        int valid = 1;
         while (1){
             char c = cin.get();
             if (c == ' '){
-                cout << "\n" << "Password contains whitespace character, please enter a new password '\n'";
-                cout << "Enter your password (password must not have whitespace characters): ";
-                password = "";
-                continue;
+                valid = 0;
             }
             if (c == '\n'){
-                break;
+                if (valid){
+                    break;
+                }
+                else{
+                    cout << "\n" << "Password contains '+' character, please enter a new password \n";
+                    cout << "Enter your password (password must not have '+' characters): ";
+                    password = "";
+                    valid = 1;
+                }
             }
             password += c;
         }
@@ -505,11 +518,8 @@ void displayUserMenu(){
                 break;
             }
             case 4: {
-                // system("clear");
-                // cout << "TRANSMISSION HISTORY" << '\n';
-                // log
                 system("clear");
-                cout << "ENTER THE START DATE" << '\n';
+                cout << "ENTER THE BEGIN DATE" << '\n';
                 string fromDate = getInputDate();
                 // log
                 cout << "ENTER THE END DATE" << '\n';
@@ -524,7 +534,7 @@ void displayUserMenu(){
             }
             case 5:{
                 system("clear");
-                cout << "ENTER THE START DATE" << '\n';
+                cout << "ENTER THE BEGIN DATE" << '\n';
                 string fromDate = getInputDate();
                 // log
                 cout << "ENTER THE END DATE" << '\n';
@@ -539,13 +549,12 @@ void displayUserMenu(){
             }
             case 6:{
                 system("clear");
-                cout << "ENTER THE START DATE" << '\n';
+                cout << "ENTER THE BEGIN DATE" << '\n';
                 string fromDate = getInputDate();
                 // log
                 cout << "ENTER THE END DATE" << '\n';
                 string toDate = getInputDate();
                 system("clear");
-                cout << "WITHDRAWAL HISTORY" << '\n';
                 cout << "DEPOSIT HISTORY" << '\n';
                 viewDepositHistory(currUser, fromDate, toDate, depositRecords);
                 cout << '\n' << "Enter 0 To Return" << '\n';

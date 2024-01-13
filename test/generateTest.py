@@ -87,7 +87,7 @@ for i in range(times * 10):
         endDate = random_date()
         if (startDate < endDate):
             break
-    f.write(' '.join([fromAccount, startDate, endDate]) + '\n')
+    f.write(' '.join([fromAccount, startDate, startDate]) + '\n')
 f.close()
 
 # generate transferMoney input

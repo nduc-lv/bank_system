@@ -73,6 +73,27 @@ vector<string> split(string str, char del){
     ans.push_back(temp);
     return ans;
 }
+int binarySearchDate(string fromDate, vector<vector<string>>& transactionHistory){
+    int left = 0;
+    int right = transactionHistory.size() - 1;
+    int mid = left + (right - left) / 2;
+    while (left < right){
+        mid = left + (right - left) / 2;
+        vector<string> transaction = transactionHistory[mid];
+        string transactionDate = split(transaction[transaction.size() - 1], '/')[0];
+        if (transactionDate == fromDate){
+            right = mid - 1;
+            continue;
+        }
+        if (transactionDate < fromDate){
+            left = mid + 1;
+        }
+        else if (transactionDate > fromDate){
+            right = mid - 1;
+        }
+    }
+    return left;
+}
 string getInputDate(){
     string ans;
     do{
@@ -120,15 +141,15 @@ void updateDeposit(unordered_map<string, vector<vector<string>>>& depositRecords
 void viewTransmissionHistory(string currUser, string fromDate, string toDate,  unordered_map<string, vector<vector<string>>>& transmissionRecords,  unordered_map<string, tuple<string, int, string>>& users) {
     vector<vector<string>> transmissionHistoryOfUser = transmissionRecords[currUser];
     int exist = 0;
-    ios_base::sync_with_stdio(false);
-    cin.tie(NULL);
-
-    for (auto record : transmissionHistoryOfUser){
+    int startDate = binarySearchDate(fromDate, transmissionHistoryOfUser);
+    for (int i = startDate; i < transmissionHistoryOfUser.size(); i++){
+        vector<string> record = transmissionHistoryOfUser[i];
         string fromAccount = record[0];
         string toAccount = record[1];
         string amount = record[2];
         string date = split(record[3], '/')[0];
         string time = split(record[3], '/')[1];
+        
         if (date < fromDate){
             continue;
         }
@@ -143,8 +164,8 @@ void viewTransmissionHistory(string currUser, string fromDate, string toDate,  u
             cout << "You transfered " + amount + " to " + get<2>(users[toAccount]) + " on " + date + " at " + time << '\n';
         }
         else{
-            cout << get<2>(users[fromAccount]) + " transfered " + amount + " to you " + " on " + date + " at " + time << '\n'; 
-        }
+            cout << get<2>(users[fromAccount]) + " transfered " + amount + " to you " + " on " + date + " at " + time << '\n';
+        } 
         
     }
     if (!exist){
@@ -154,9 +175,9 @@ void viewTransmissionHistory(string currUser, string fromDate, string toDate,  u
 void viewWithdrawalHistory(string currUser, string fromDate, string toDate, unordered_map<string, vector<vector<string>>>& withdrawnRecords) {
     vector<vector<string>> withdrawnHistoryOfUser = withdrawnRecords[currUser];
     int exist = 0;
-    ios_base::sync_with_stdio(false);
-    cin.tie(NULL);
-    for (auto record : withdrawnHistoryOfUser){
+    int startDate = binarySearchDate(fromDate, withdrawnHistoryOfUser);
+    for (int i = startDate; i < withdrawnHistoryOfUser.size(); i++){
+        vector<string> record = withdrawnHistoryOfUser[i];
         string amount = record[1];
         string date = split(record[2], '/')[0];
         string time = split(record[2], '/')[1];
@@ -170,7 +191,7 @@ void viewWithdrawalHistory(string currUser, string fromDate, string toDate, unor
         if (!exist){
             exist = 1;
         }
-        cout << "You withdrawed " + amount + " to" + " on " + date + " at " + time << '\n';
+        cout << "You withdrawed " + amount + " on " + date + " at " + time << '\n';
             
         
     }
@@ -181,9 +202,9 @@ void viewWithdrawalHistory(string currUser, string fromDate, string toDate, unor
 void viewDepositHistory(string currUser, string fromDate, string toDate, unordered_map<string, vector<vector<string>>>& depositRecords) {
     vector<vector<string>> depositHistoryOfUser = depositRecords[currUser];
     int exist = 0;
-    ios_base::sync_with_stdio(false);
-    cin.tie(NULL);
-    for (auto record : depositHistoryOfUser){
+    int startDate = binarySearchDate(fromDate, depositHistoryOfUser);
+    for (int i = startDate; i < depositHistoryOfUser.size(); i++){
+        vector<string> record = depositHistoryOfUser[i];
         string amount = record[2];
         string date = split(record[3], '/')[0];
         string time = split(record[3], '/')[1];
@@ -197,7 +218,7 @@ void viewDepositHistory(string currUser, string fromDate, string toDate, unorder
             exist = 1;
         }
             
-        cout << "You deposited " + amount + " to" + " on " + date + " at " + time << '\n';
+        cout << "You deposited " + amount + " on " + date + " at " + time << '\n';
     }
     if (!exist){
             cout << "No records" << endl;
@@ -206,8 +227,6 @@ void viewDepositHistory(string currUser, string fromDate, string toDate, unorder
 void transferMoney(string currUser,string username, int amount, unordered_map<string, tuple<string, int, string>>& users,unordered_map<string, vector<vector<string>>>& transmissionRecords){
     get<1>(users[currUser]) -= amount;
     get<1>(users[username]) += amount;
-    ios_base::sync_with_stdio(false);
-    cin.tie(NULL);
     // save transmission
     string date = getDate();
     string originInfo = currUser + " " + username + " " + to_string(amount) + " " + date;
@@ -222,8 +241,6 @@ void transferMoney(string currUser,string username, int amount, unordered_map<st
 void withdrawnMoney(int amount, string currUser, unordered_map<string, tuple<string, int, string>>& users, unordered_map<string, vector<vector<string>>>& withdrawnRecords){
     get<1>(users[currUser]) -= amount;
     string date = getDate();
-    ios_base::sync_with_stdio(false);
-    cin.tie(NULL);
     ofstream withdrawnFile;
     string info = currUser + " " + to_string(amount) + " " + date;
     withdrawnFile.open("./output/withdrawnMoney.txt", ios::app);
@@ -234,8 +251,6 @@ void withdrawnMoney(int amount, string currUser, unordered_map<string, tuple<str
 }
 void depositMoney(string userAccount, string currUser, string amount,  unordered_map<string, tuple<string, int, string>>& users, unordered_map<string, vector<vector<string>>>& depositRecords){
     get<1>(users[userAccount]) += stoi(amount);
-    ios_base::sync_with_stdio(false);
-    cin.tie(NULL);
     ofstream depositFile;
     string date = getDate();
     string info = userAccount + " " + currUser + " " + amount + ' ' + date;
@@ -247,7 +262,5 @@ void depositMoney(string userAccount, string currUser, string amount,  unordered
 
 void checkBalance(string userAccount, unordered_map<string, tuple<string, int, string>>& users){
     tuple<string, int, string> userInfo = users[userAccount];
-    ios_base::sync_with_stdio(false);
-    cin.tie(NULL);
     cout << get<2>(userInfo) << "'s balance is: " << get<1>(userInfo) << '\n';
 }

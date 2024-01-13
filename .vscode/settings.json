@@ -5,6 +5,7 @@
         "ostream": "cpp",
         "iosfwd": "cpp",
         "tuple": "cpp",
-        "chrono": "cpp"
+        "chrono": "cpp",
+        "unordered_map": "cpp"
     }
 }

@@ -132,18 +132,21 @@ void testViewWithdrawalHistory(){
     // Redirect std::cout to the file
     std::streambuf *coutBuffer = std::cout.rdbuf();
     std::cout.rdbuf(outputFile.rdbuf());
-    auto startTime = std::chrono::high_resolution_clock::now();
+    std::chrono::nanoseconds time = std::chrono::nanoseconds::zero();
     while (getline(viewFile, inputInfo)){
         vector<string> info = split(inputInfo, ' ');
         string account = info[0];
         string startDate = info[1];
         string endDate = info[2];
+        auto startTime = std::chrono::high_resolution_clock::now();
         cout << account << "'s Withdrawal history" << '\n';
         viewWithdrawalHistory(account, startDate, endDate, withdrawnRecords); 
         cout << "#######################" << '\n';
+        auto endTime = std::chrono::high_resolution_clock::now();
+        time += (endTime - startTime);
     }
-    auto endTime = std::chrono::high_resolution_clock::now();
-    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime);
+    // auto endTime = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(time);
     std::cout.rdbuf(coutBuffer);
     outputFile.close();
     viewFile.close();
@@ -164,6 +167,7 @@ void testViewDepositHistory(){
     std::streambuf *coutBuffer = std::cout.rdbuf();
     std::cout.rdbuf(outputFile.rdbuf());
     auto startTime = std::chrono::high_resolution_clock::now();
+
     while (getline(viewFile, inputInfo)){
         vector<string> info = split(inputInfo, ' ');
         string account = info[0];
@@ -228,9 +232,9 @@ void testDepositMoney(){
     std::cout << "Time taken to run depositMoney 100,000 times: " << duration.count() << " milliseconds" << std::endl;
 }
 void testCheckBalance(){
-    ifstream viewFile("./input/checkBalance.txt");
+    ifstream inputFile("./input/checkBalance.txt");
     string inputInfo;
-     std::ofstream outputFile("./output/checkBalance.txt");
+    std::ofstream outputFile("./output/checkBalance.txt");
 
      // Check if the file is opened successfully
      if (!outputFile.is_open()) {
@@ -242,17 +246,17 @@ void testCheckBalance(){
      std::streambuf *coutBuffer = std::cout.rdbuf();
      std::cout.rdbuf(outputFile.rdbuf());
     auto startTime = std::chrono::high_resolution_clock::now();
-    while (getline(viewFile, inputInfo)){
-        // cout << inputInfo << "'s balance" << '\n';
+    while (getline(inputFile, inputInfo)){
+        cout << inputInfo << "'s balance" << '\n';
         checkBalance(inputInfo, users);
-        // cout << "#######################" << '\n';
+        cout << "#######################" << '\n';
     }
     auto endTime = std::chrono::high_resolution_clock::now();
-    auto duration = std::chrono::duration_cast<std::chrono::seconds>(endTime - startTime);
-    // std::cout.rdbuf(coutBuffer);
-    // outputFile.close();
-    viewFile.close();
-    std::cout << "Time taken to run checkBalance 100,000 times: " << duration.count() << " seconds" << std::endl;
+    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime);
+    std::cout.rdbuf(coutBuffer);
+    outputFile.close();
+    inputFile.close();
+    std::cout << "Time taken to run checkBalance 100,000 times: " << duration.count() << " milliseconds" << std::endl;
 }
 int main(){
     ios_base::sync_with_stdio(false);
